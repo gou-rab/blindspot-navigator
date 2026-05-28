@@ -1,8 +1,8 @@
 # ◉ BlindSpot Navigator — Real-Time Obstacle Detection
 
-> Real-time camera → detects obstacles → warns via voice · রিয়েল-টাইম বাধা সনাক্তকরণ ও ভয়েস সতর্কতা
+> Real-time camera → detects obstacles → warns via voice 
 
-A Flask web application that uses **Groq AI Vision** to detect obstacles and hazards in real-time from a camera feed, then immediately reads warnings aloud via **Text-to-Speech** — in **English 🇬🇧** or **বাংলা 🇧🇩**.
+A Flask web application that uses **Groq AI Vision** to detect obstacles and hazards in real-time from a camera feed, then immediately reads warnings aloud via **Text-to-Speech** — in **English** or **বাংলা**.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square)
 ![Flask](https://img.shields.io/badge/Flask-3.1.0-green?style=flat-square)
