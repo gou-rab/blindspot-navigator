@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlindSpot Navigator — Real-Time Obstacle Detection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+  <div class="scan-line"></div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon-wrap">
+        <span class="logo-icon">◉</span>
+        <span class="logo-ping"></span>
+      </div>
+      <span class="logo-text">BlindSpot</span>
+      <span class="logo-sub">NAVIGATOR</span>
+    </div>
+    <p class="tagline">Real-Time Obstacle Detection · রিয়েল-টাইম বাধা সনাক্তকরণ</p>
+  </header>
+
+  <main class="main">
+
+    <!-- STATUS BAR -->
+    <div class="status-bar" id="statusBar" role="status" aria-live="polite">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">System Ready — Activate camera to begin navigation</span>
+      <span class="status-clock" id="statusClock"></span>
+    </div>
+
+    <!-- DANGER LEVEL INDICATOR -->
+    <div class="danger-panel" id="dangerPanel">
+      <div class="danger-level" id="dangerLevel">
+        <div class="dl-icon" id="dlIcon">⬡</div>
+        <div class="dl-info">
+          <div class="dl-label" id="dlLabel">STANDBY</div>
+          <div class="dl-sub" id="dlSub">Waiting for scan...</div>
+        </div>
+        <div class="dl-bars">
+          <div class="dl-bar" id="dlBar1"></div>
+          <div class="dl-bar" id="dlBar2"></div>
+          <div class="dl-bar" id="dlBar3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+      <!-- LEFT: Camera Feed -->
+      <section class="camera-panel">
+        <div class="panel-header">
+          <span class="ph-title">◎ CAMERA FEED</span>
+          <div class="scan-indicator" id="scanIndicator">
+            <span class="si-dot"></span> IDLE
+          </div>
+        </div>
+
+        <div class="camera-box" id="cameraBox">
+          <video id="videoFeed" autoplay playsinline aria-label="Camera feed" style="display:none;"></video>
+          <canvas id="captureCanvas" style="display:none;" aria-hidden="true"></canvas>
+          <img id="previewImg" style="display:none;" alt="Captured frame"/>
+
+          <!-- HUD Overlay -->
+          <div class="hud-overlay" id="hudOverlay" style="display:none;">
+            <div class="hud-corner tl"></div>
+            <div class="hud-corner tr"></div>
+            <div class="hud-corner bl"></div>
+            <div class="hud-corner br"></div>
+            <div class="hud-crosshair">
+              <div class="ch-h"></div>
+              <div class="ch-v"></div>
+            </div>
+            <div class="hud-scan-bar" id="hudScanBar"></div>
+          </div>
+
+          <div class="cam-placeholder" id="camPlaceholder">
+            <div class="cp-icon">◉</div>
+            <p>Camera feed appears here</p>
+            <p class="cp-sub">Activate camera to start</p>
+          </div>
+        </div>
+
+        <!-- Camera Controls -->
+        <div class="cam-controls">
+          <button class="btn btn-cam" id="btnCamera">◎ Activate Camera</button>
+          <label class="btn btn-upload" for="fileInput" tabindex="0" role="button">
+            ⊕ Upload Image
+            <input type="file" id="fileInput" accept="image/*" style="display:none;"/>
+          </label>
+        </div>
+
+        <!-- Auto Scan -->
+        <div class="auto-scan-row">
+          <button class="btn btn-scan" id="btnScan" disabled>⚡ Scan Once</button>
+          <button class="btn btn-auto" id="btnAuto" disabled>
+            <span id="autoIcon">▶</span> Auto Scan
+          </button>
+          <select class="select-interval" id="selectInterval">
+            <option value="3000">Every 3s</option>
+            <option value="5000">Every 5s</option>
+            <option value="8000">Every 8s</option>
+          </select>
+        </div>
+
+      </section>
+
+      <!-- RIGHT: Alert + Info -->
+      <section class="alert-panel">
+
+        <!-- Language Toggle -->
+        <div class="lang-row">
+          <span class="lang-lbl">Voice Language:</span>
+          <div class="lang-toggle">
+            <button class="btn-lang active" id="btnEN" onclick="setLang('en')">🇬🇧 EN</button>
+            <button class="btn-lang" id="btnBN" onclick="setLang('bn')">🇧🇩 বাংলা</button>
+          </div>
+        </div>
+
+        <!-- Main Alert Box -->
+        <div class="alert-box" id="alertBox" role="alert" aria-live="assertive">
+          <div class="ab-icon" id="abIcon">🔊</div>
+          <p class="ab-text" id="abText">Scan the environment to receive obstacle alerts.</p>
+        </div>
+
+        <!-- Direction Compass -->
+        <div class="compass-box">
+          <div class="compass-title">DIRECTION</div>
+          <div class="compass" id="compass">
+            <div class="compass-ring">
+              <span class="cn cn-n">N</span>
+              <span class="cn cn-e">E</span>
+              <span class="cn cn-s">S</span>
+              <span class="cn cn-w">W</span>
+            </div>
+            <div class="compass-arrow" id="compassArrow">▲</div>
+            <div class="compass-label" id="compassLabel">—</div>
+          </div>
+        </div>
+
+        <!-- Obstacles List -->
+        <div class="obstacles-box">
+          <div class="ob-title">⚠ DETECTED OBSTACLES</div>
+          <div id="obstacleList" class="obstacle-list">
+            <p class="muted-text">No obstacles detected yet.</p>
+          </div>
+        </div>
+
+        <!-- Advice -->
+        <div class="advice-box" id="adviceBox">
+          <div class="adv-icon">💡</div>
+          <p id="adviceText" class="adv-text">Navigation advice will appear here after scanning.</p>
+        </div>
+
+        <!-- Voice Controls -->
+        <div class="voice-row">
+          <button class="btn-voice" id="btnRepeat" disabled>🔊 Repeat Alert</button>
+          <button class="btn-voice btn-mute" id="btnMute" onclick="toggleMute()">🔔 Sound ON</button>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- ALERT HISTORY -->
+    <section class="history-panel">
+      <div class="hp-header">
+        <span class="hp-title">≡ SCAN HISTORY</span>
+        <button class="btn-clear" onclick="clearHistory()">✕ Clear</button>
+      </div>
+      <div id="historyList" class="history-list">
+        <p class="muted-text">Scan history will appear here.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    BlindSpot Navigator · Powered by Groq AI · Built for Accessibility ♿
+  </footer>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+    <div class="loader-ring"></div>
+    <p class="loader-text">SCANNING ENVIRONMENT…</p>
+    <div class="loader-bars">
+      <div class="lb"></div><div class="lb"></div><div class="lb"></div>
+      <div class="lb"></div><div class="lb"></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
